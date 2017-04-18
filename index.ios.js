@@ -9,19 +9,15 @@ import {
   AppRegistry,
   StyleSheet,
   Text,
+  Navigator,
+  StatusBar,
   Image,
-  View,
 } from 'react-native';
-import PostsView from './src/PostsView';
-import MessageInput from './src/MessageInput';
+import SendBird from 'sendbird';
 import config from './src/config';
+import routes from './src/routes';
 
-export const API_URL = 'http://207.154.202.86:8065/api/v3';
-const WS_URL = 'ws://207.154.202.86:8065/api/v3/users/websocket';
-const TEAM_ID = 'jcrhdjc18pdwjjia5zqrcfio4e';
-const CHANNEL_ID = 'w6b49x9p4pr8ukokqgbjaki7rh';
-
-const backgroundImage = require('./img/bg.png');
+const backgroundImage = require('./src/img/background.png');
 
 const styles = StyleSheet.create({
   container: {
@@ -36,96 +32,26 @@ export default class BeatChat extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      loggedUser: null,
-      message: '',
-      posts: [],
-      token: null,
+      sb: new SendBird({ appId: config.sendbird_app_id }),
     };
-    this.handleSend = this.handleSend.bind(this);
   }
 
   componentDidMount() {
-    fetch(`${API_URL}/users/login`, {
-      method: 'POST',
-      body: JSON.stringify({
-        login_id: config.login_id,
-        password: config.password,
-      }),
-    })
-    .then((response) => {
-      const token = response.headers.get('Token');
-      this.setState({ token });
+    this.sb = new SendBird({ appId: config.sendbird_app_id });
+    this.sb.connect(config.sendbird_user_id, (user, error) => {
+      if (error) {
+        // @TODO implementovat nejaku hlasku
+        console.error(error);
+      }
 
-      const ws = new WebSocket(WS_URL);
-      ws.onmessage = this.handleMessage.bind(this);
-      ws.onopen = () => {
-        // login user
-        ws.send(JSON.stringify({
-          seq: 1,
-          action: 'authentication_challenge',
-          data: {
-            token,
-          },
-        }));
-      };
-
-      return response.json();
-    })
-    .then((response) => {
-      this.setState({ loggedUser: response });
-      this.getPosts();
+      this.setState({ loggedUser: user });
+      console.log(user);
     });
-  }
-
-  getPosts() {
-    fetch(`${API_URL}/teams/${TEAM_ID}/channels/${CHANNEL_ID}/posts/page/0/60`, {
-      headers: {
-        Authorization: `Bearer ${this.state.token}`,
-      },
-    })
-      .then(response => response.json())
-      .then((response) => {
-        const { order, posts } = response;
-        const postsArray = [];
-        for (let i = order.length - 1; i >= 0; i--) {
-          const postId = order[i];
-          postsArray.push(posts[postId]);
-        }
-        this.setState({ posts: postsArray });
-      })
-      .catch(error => console.log(error));
-  }
-
-  handleSend() {
-    let message = this.state.message;
-    if (message.length === 0) {
-      message = 'Páčik';
-    }
-    fetch(`${API_URL}/teams/${TEAM_ID}/channels/${CHANNEL_ID}/posts/create`, {
-      method: 'POST',
-      body: JSON.stringify({
-        channel_id: CHANNEL_ID,
-        message,
-      }),
-      headers: {
-        Authorization: `Bearer ${this.state.token}`,
-      },
-    }).then(() => this.setState({ message: '' }));
-  }
-
-  handleMessage(wsMessage) {
-    const response = JSON.parse(wsMessage.data);
-    if (response.event === 'posted') {
-      // it's a message from someone
-      const post = JSON.parse(response.data.post);
-      const posts = [...this.state.posts, post];
-      this.setState({ posts });
-    }
   }
 
   render() {
     if (!this.state.loggedUser) {
-      return <View><Text>Prihlasujem sa ...</Text></View>;
+      return <Text>Moment</Text>;
     }
 
     return (
@@ -133,11 +59,30 @@ export default class BeatChat extends Component {
         source={backgroundImage}
         style={styles.container}
       >
-        <PostsView posts={this.state.posts} loggedUserId={this.state.loggedUser.id} />
-        <MessageInput
-          message={this.state.message}
-          onAction={this.handleSend}
-          onChangeMessage={message => this.setState({ message })}
+        <StatusBar
+          barStyle="light-content"
+        />
+        <Navigator
+          initialRoute={{ name: 'login' }}
+          renderScene={(route, navigator) => {
+            console.log(route.name);
+            let params = {};
+            if (route.params) {
+              params = route.params;
+            }
+            const Container = routes[route.name];
+            return (
+              <Container
+                route={route}
+                navigator={navigator}
+                sb={this.state.sb}
+                loggedUser={this.state.loggedUser}
+                params={params}
+              />
+            );
+          }}
+          configureScene={() => Navigator.SceneConfigs.FloatFromRight}
+          style={styles.container}
         />
       </Image>
     );

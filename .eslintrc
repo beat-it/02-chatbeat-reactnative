@@ -6,7 +6,8 @@
     }],
     "no-plusplus": [0, {
       "allowForLoopAfterthoughts": true
-    }] 
+    }],
+    "no-underscore-dangle": [0]
   }, 
   "globals": {
     "fetch": false,

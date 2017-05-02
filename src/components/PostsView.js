@@ -2,15 +2,14 @@ import React, { PropTypes, Component } from 'react';
 import {
   StyleSheet,
   View,
-  Keyboard,
   ListView,
+  ListViewDataSource,
 } from 'react-native';
 import Post from './Post';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    //justifyContent: 'flex-end',
   },
 });
 
@@ -23,16 +22,22 @@ class PostsView extends Component {
   }
 
   render() {
-    const { dataSource, loggedUserId } = this.props;
+    const { dataSource, loggedUserId, onLoadMore } = this.props;
     return (
       <View style={[styles.container, { transform: [{ scaleY: -1 }] }]}>
         <ListView
           ref={(el) => { this.scrollViewComponent = el; }}
           enableEmptySections
-          onEndReached={() => { }}
+          onEndReached={() => { onLoadMore(); }}
           onEndReachedThreshold={40}
           dataSource={dataSource}
-          renderRow={post => <Post key={post.messageId} post={post} isMe={post._sender.userId === loggedUserId} />}
+          renderRow={post => (
+            <Post
+              key={post.messageId}
+              post={post}
+              isMe={post._sender.userId === loggedUserId}
+            />
+          )}
         />
       </View>
     );
@@ -40,8 +45,9 @@ class PostsView extends Component {
 }
 
 PostsView.propTypes = {
-  //posts: PropTypes.arrayOf(PropTypes.object).isRequired,
   loggedUserId: PropTypes.string.isRequired,
+  onLoadMore: PropTypes.func.isRequired,
+  dataSource: PropTypes.instanceOf(ListViewDataSource).isRequired,
 };
 
 export default PostsView;

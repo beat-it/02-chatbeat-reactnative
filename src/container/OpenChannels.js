@@ -4,20 +4,20 @@
  * @flow
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import {
   StyleSheet,
   Text,
   Image,
+  Navigator,
   View,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
 import SendBird from 'sendbird';
-import PostsView from '../components/PostsView';
 import Header from '../components/Header';
-import MessageInput from '../components/MessageInput';
-import config from '../config';
+import UserImg from '../img/user.png';
+import PlusImg from '../img/plus.png';
 
 const styles = StyleSheet.create({
   container: {
@@ -54,8 +54,12 @@ class OpenChannels extends Component {
     return (
       <View style={styles.container}>
         <Header
+          leftIcon={UserImg}
+          rightIcon={PlusImg}
           onPressLeftAction={() => {
-            this.props.navigator.pop();
+            this.props.navigator.push({
+              name: 'profile',
+            });
           }}
           onPressRightAction={() => { }}
           title={'Zoznam kanálov'}
@@ -80,12 +84,17 @@ class OpenChannels extends Component {
   }
 }
 
+OpenChannels.propTypes = {
+  navigator: PropTypes.instanceOf(Navigator).isRequired,
+  sb: PropTypes.instanceOf(SendBird).isRequired,
+};
+
 export default OpenChannels;
 
 const coverImageSize = 48;
 
-const ListItem = (props) => (
-  <TouchableOpacity onPress={() => { props.onPressChannel(props.item); }} activeOpacity={0.5}>
+const ListItem = props => (
+  <TouchableOpacity onPress={() => { props.onPressChannel(); }} activeOpacity={0.5}>
     <View
       style={{
         borderBottomColor: '#dbdbdb',
@@ -104,10 +113,20 @@ const ListItem = (props) => (
           borderRadius: coverImageSize / 2,
           overflow: 'hidden',
           marginRight: 10,
-        }} source={{ uri: props.image }} />
-      <Text style={{
-        fontSize: 18,
-      }}>{props.title}</Text>
+        }}
+        source={{ uri: props.image }}
+      />
+      <Text
+        style={{
+          fontSize: 18,
+        }}
+      >{props.title}</Text>
     </View>
   </TouchableOpacity>
 );
+
+ListItem.propTypes = {
+  image: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  onPressChannel: PropTypes.func.isRequired,
+};

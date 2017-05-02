@@ -4,21 +4,23 @@
  * @flow
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import {
   StyleSheet,
+  Navigator,
   Text,
   Platform,
   KeyboardAvoidingView,
-  Image,
+  Alert,
   ListView,
   View,
 } from 'react-native';
 import SendBird from 'sendbird';
+import ImagePicker from 'react-native-image-picker';
 import PostsView from '../components/PostsView';
 import Header from '../components/Header';
 import MessageInput from '../components/MessageInput';
-import config from '../config';
+import BackImg from '../img/back.png';
 
 const styles = StyleSheet.create({
   container: {
@@ -40,10 +42,12 @@ class Chat extends Component {
     this.state = {
       message: '',
       postsDataSource: ds.cloneWithRows([]),
+      messageListQuery: null,
       posts: [],
       channel: null,
     };
     this.handleSend = this.handleSend.bind(this);
+    this.handleSendFile = this.handleSendFile.bind(this);
   }
 
   componentDidMount() {
@@ -54,36 +58,43 @@ class Chat extends Component {
 
     sb.addChannelHandler('handler', ChannelHandler);
 
-    sb.OpenChannel.getChannel(this.props.params.channelUrl, (channel, error) => {
-      console.log(this.props.params.channelUrl);
-      if (error) {
-        // @TODO implementovat nejaku hlasku
-        console.error(error);
+    sb.OpenChannel.getChannel(this.props.params.channelUrl, (channel, channelError) => {
+      if (channelError) {
+        Alert.alert('Failed to open the channel');
         return;
       }
 
-      this.setState({ channel });
-
-      const messageListQuery = channel.createPreviousMessageListQuery();
-
-      messageListQuery.load(20, true, (messageList, error) => {
-        if (error) {
-          console.error(error);
-          return;
-        }
-        //messageList.reverse();
-        this.setState({
-          posts: messageList,
-          postsDataSource: this.state.postsDataSource.cloneWithRows(messageList)
-        });
-        console.log(messageList);
+      this.setState({ channel }, () => {
+        this.loadMessages(true);
       });
 
       channel.enter((response, error) => {
         if (error) {
-          // @TODO implementovat nejaku hlasku
-          console.error(error);
+          Alert.alert('Failed to enter the channel');
         }
+      });
+    });
+  }
+
+  loadMessages(refresh) {
+    let messageListQuery = this.state.messageListQuery;
+
+    if (refresh) {
+      messageListQuery = this.state.channel.createPreviousMessageListQuery();
+      this.setState({ messageListQuery, posts: [] });
+    }
+
+    messageListQuery.load(20, true, (messageList, error) => {
+      if (error) {
+        Alert.alert('Failed to fetch messages');
+        return;
+      }
+
+      const posts = [...this.state.posts, ...messageList];
+
+      this.setState({
+        posts,
+        postsDataSource: this.state.postsDataSource.cloneWithRows(posts),
       });
     });
   }
@@ -91,18 +102,16 @@ class Chat extends Component {
   handleSend() {
     let message = this.state.message;
     if (message.length === 0) {
-      message = 'Páčik';
+      message = '👍';
     }
 
     this.state.channel.sendUserMessage(message, '', (messageObject, error) => {
       if (error) {
-        // @TODO implementovat nejaku hlasku
-        console.error(error);
+        Alert.alert('Failed to send text message');
         return;
       }
 
       // onSent
-      console.log(messageObject);
       const posts = [messageObject, ...this.state.posts];
       this.setState({
         posts,
@@ -112,40 +121,96 @@ class Chat extends Component {
     });
   }
 
+  handleSendFile() {
+    ImagePicker.showImagePicker({
+      title: 'Select Image File To Send',
+      mediaType: 'photo',
+      noData: true,
+    }, (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else if (response.customButton) {
+        console.log('User tapped custom button: ', response.customButton);
+      } else {
+        const source = { uri: response.uri };
+
+        if (response.name) {
+          source.name = response.fileName;
+        } else {
+          const paths = response.uri.split('/');
+          source.name = paths[paths.length - 1];
+        }
+
+        if (response.type) {
+          source.type = response.type;
+        }
+
+        this.state.channel.sendFileMessage(source, (messageObject, error) => {
+          if (error) {
+            Alert.alert('Failed to send file');
+            return;
+          }
+
+          const posts = [messageObject, ...this.state.posts];
+          this.setState({
+            posts,
+            postsDataSource: this.state.postsDataSource.cloneWithRows(posts),
+          });
+        });
+      }
+    });
+  }
+
   handleMessage(channel, message) {
-    if (message.messageType === 'user') {
-      // it's a message from someone
-      const posts = [message, ...this.state.posts];
-      this.setState({
-        posts,
-        postsDataSource: this.state.postsDataSource.cloneWithRows(posts),
-      });
-    }
+    // it's a message from someone
+    const posts = [message, ...this.state.posts];
+    this.setState({
+      posts,
+      postsDataSource: this.state.postsDataSource.cloneWithRows(posts),
+    });
   }
 
   render() {
     if (!this.state.channel) {
-      return <View><Text>Otvaram kanal ...</Text></View>;
+      return <View><Text>Opening channel ...</Text></View>;
     }
 
     return (
       <ChatView behavior="padding" style={styles.container}>
         <Header
+          leftIcon={BackImg}
           onPressLeftAction={() => {
             this.props.navigator.pop();
           }}
           title={this.state.channel.name}
-          onPressRightAction={() => { }}
         />
-        <PostsView dataSource={this.state.postsDataSource} loggedUserId={this.props.loggedUser.userId} />
+        <PostsView
+          dataSource={this.state.postsDataSource}
+          loggedUserId={this.props.loggedUser.userId}
+          onLoadMore={() => { this.loadMessages(false); }}
+        />
         <MessageInput
           message={this.state.message}
           onAction={this.handleSend}
           onChangeMessage={message => this.setState({ message })}
+          onPressPhoto={this.handleSendFile}
         />
       </ChatView>
     );
   }
 }
+
+Chat.propTypes = {
+  loggedUser: PropTypes.objectOf({
+    userId: PropTypes.string.isRequired,
+  }).isRequired,
+  navigator: PropTypes.instanceOf(Navigator).isRequired,
+  sb: PropTypes.instanceOf(SendBird).isRequired,
+  params: PropTypes.objectOf({
+    channelUrl: PropTypes.string.isRequired,
+  }).isRequired,
+};
 
 export default Chat;

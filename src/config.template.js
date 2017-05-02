@@ -1,5 +1,4 @@
 export default {
-  login_id: '',
-  password: '',
-  app_id: '',
+  sendbird_app_id: '',
+  sendbird_app_token: '',
 };

@@ -8,7 +8,6 @@ import React, { Component } from 'react';
 import {
   AppRegistry,
   StyleSheet,
-  Text,
   Navigator,
   StatusBar,
   Image,
@@ -16,6 +15,7 @@ import {
 import SendBird from 'sendbird';
 import config from './src/config';
 import routes from './src/routes';
+
 
 const backgroundImage = require('./src/img/background.png');
 
@@ -33,27 +33,15 @@ export default class BeatChat extends Component {
     super(props);
     this.state = {
       sb: new SendBird({ appId: config.sendbird_app_id }),
+      loggedUser: null,
     };
   }
 
   componentDidMount() {
-    this.sb = new SendBird({ appId: config.sendbird_app_id });
-    this.sb.connect(config.sendbird_user_id, (user, error) => {
-      if (error) {
-        // @TODO implementovat nejaku hlasku
-        console.error(error);
-      }
 
-      this.setState({ loggedUser: user });
-      console.log(user);
-    });
   }
 
   render() {
-    if (!this.state.loggedUser) {
-      return <Text>Moment</Text>;
-    }
-
     return (
       <Image
         source={backgroundImage}
@@ -65,7 +53,6 @@ export default class BeatChat extends Component {
         <Navigator
           initialRoute={{ name: 'login' }}
           renderScene={(route, navigator) => {
-            console.log(route.name);
             let params = {};
             if (route.params) {
               params = route.params;
@@ -77,6 +64,7 @@ export default class BeatChat extends Component {
                 navigator={navigator}
                 sb={this.state.sb}
                 loggedUser={this.state.loggedUser}
+                onChangeLoggedUser={loggedUser => this.setState({ loggedUser })}
                 params={params}
               />
             );

@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import ImageButton from '../components/ImageButton';
-import likeIcon from '../img/like.png';
+import LikeImg from '../img/like.png';
 
 const styles = StyleSheet.create({
   container: {
@@ -45,6 +45,7 @@ class MessageInput extends Component {
       height: 0,
     };
     this.onChangeMessage = this.props.onChangeMessage.bind(this);
+    this.onPressPhoto = this.props.onPressPhoto.bind(this);
     this.onAction = this.props.onAction.bind(this);
   }
 
@@ -53,7 +54,12 @@ class MessageInput extends Component {
     return (
       <View style={styles.container}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <ImageButton
+            onPress={this.onPressPhoto}
+            image={LikeImg}
+          />
           <TextInput
+            autoCorrect={false}
             placeholder="Napíš niečo ..."
             enablesReturnKeyAutomatically
             returnKeyType="done"
@@ -70,7 +76,7 @@ class MessageInput extends Component {
               ? <Text style={styles.actionButtonContent}>Poslať</Text>
               : <ImageButton
                 onPress={this.onAction}
-                image={likeIcon}
+                image={LikeImg}
               />}
           </TouchableOpacity>
         </View>
@@ -81,6 +87,7 @@ class MessageInput extends Component {
 
 MessageInput.propTypes = {
   onChangeMessage: PropTypes.func.isRequired,
+  onPressPhoto: PropTypes.func.isRequired,
   message: PropTypes.string.isRequired,
   onAction: PropTypes.func.isRequired,
 };

@@ -1,21 +1,13 @@
-import React, { PropTypes, Component } from 'react';
+import React, { PropTypes } from 'react';
 import {
   StyleSheet,
-  TextInput,
-  TouchableOpacity,
   Text,
   View,
-  Image,
-  StatusBar,
 } from 'react-native';
 import ImageButton from './ImageButton';
-import backIcon from '../img/back.png';
 
 const styles = StyleSheet.create({
   container: {
-    //borderBottomWidth: StyleSheet.hairlineWidth,
-    //borderBottomColor: 'rgba(255,255,255,.5)',
-    //position: 'absolute',
     left: 0,
     flexDirection: 'row',
     alignItems: 'center',
@@ -24,27 +16,45 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 10,
     paddingTop: 30,
-    //marginTop: 20,
-    //backgroundColor: 'rgba(0,0,0,0.2)',
-    //backgroundColor: 'rgba(0,0,0,0.2)',
-    //backgroundColor: '#FE4100',
-    //backgroundColor: 'rgba(255,255,255,.5)',
     backgroundColor: '#FF7A31',
   },
 });
 
-const Header = (props) => (
+const Header = props => (
   <View blurRadius={1} style={styles.container}>
     <ImageButton
       onPress={props.onPressLeftAction}
-      image={backIcon}
+      image={props.leftIcon}
     />
-    <Text style={{ color: '#fff', fontWeight: 'bold', textAlign: 'center', flex: 1, fontSize: 18 }}>{props.title}</Text>
+    <Text
+      style={{
+        color: '#fff',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        flex: 1,
+        fontSize: 18,
+      }}
+    >{props.title}</Text>
     <ImageButton
       onPress={props.onPressRightAction}
-      image={backIcon}
+      image={props.rightIcon}
     />
   </View>
 );
+
+Header.propTypes = {
+  title: PropTypes.node.isRequired,
+  leftIcon: PropTypes.number,
+  rightIcon: PropTypes.number,
+  onPressLeftAction: PropTypes.func,
+  onPressRightAction: PropTypes.func,
+};
+
+Header.defaultProps = {
+  leftIcon: 0,
+  rightIcon: 0,
+  onPressLeftAction: () => { },
+  onPressRightAction: () => { },
+};
 
 export default Header;

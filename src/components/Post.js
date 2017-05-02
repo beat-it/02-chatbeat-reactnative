@@ -31,12 +31,21 @@ const styles = StyleSheet.create({
 const Post = ({ post, isMe }) => (
   <View style={[styles.container, { transform: [{ scaleY: -1 }], flexDirection: isMe ? 'row-reverse' : 'row' }]}>
     <Image source={{ uri: post._sender.profileUrl }} style={styles.userImage} />
-    <Text
-      style={[styles.message, {
-        textAlign: isMe ? 'right' : 'left',
-      }]}
-      da
-    >{post.message}</Text>
+    {post.messageType === 'user'
+      && <Text
+        style={[styles.message, {
+          textAlign: isMe ? 'right' : 'left',
+          fontSize: post.message === '👍' ? 36 : 14,
+        }]}
+      >{post.message}</Text>}
+    {post.messageType === 'file'
+      && <Image
+        source={{ uri: post.url }}
+        style={{
+          width: 100,
+          height: 70,
+        }}
+      />}
   </View >
 );
 
@@ -45,7 +54,7 @@ Post.propTypes = {
     _sender: PropTypes.shape({
       profileUrl: PropTypes.string,
     }),
-    message: PropTypes.string.isRequired,
+    message: PropTypes.string,
   }).isRequired,
   isMe: PropTypes.bool,
 };

@@ -1,10 +1,10 @@
 import React, { PropTypes } from 'react';
 import {
-  Image,
   Text,
   View,
-  StyleSheet
+  StyleSheet,
 } from 'react-native';
+import CacheableImage from 'react-native-cacheable-image';
 
 const userImageSize = 48;
 
@@ -17,8 +17,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 4,
     overflow: 'hidden',
-    marginHorizontal: 10,
-    alignSelf: 'center',
   },
   userImage: {
     width: userImageSize,
@@ -26,32 +24,46 @@ const styles = StyleSheet.create({
     borderRadius: userImageSize / 2,
     overflow: 'hidden',
   },
+  sender: {
+    fontSize: 10,
+    color: '#555',
+  },
 });
 
 const Post = ({ post, isMe }) => (
   <View style={[styles.container, { transform: [{ scaleY: -1 }], flexDirection: isMe ? 'row-reverse' : 'row' }]}>
-    <Image source={{ uri: post._sender.profileUrl }} style={styles.userImage} />
-    {post.messageType === 'user'
-      && <Text
-        style={[styles.message, {
-          textAlign: isMe ? 'right' : 'left',
-          fontSize: post.message === '👍' ? 36 : 14,
-        }]}
-      >{post.message}</Text>}
-    {post.messageType === 'file'
-      && <Image
-        source={{ uri: post.url }}
-        style={{
-          width: 100,
-          height: 70,
-        }}
-      />}
+    <CacheableImage
+      source={{ uri: post._sender.profileUrl }}
+      key={post._sender.profileUrl}
+      style={styles.userImage}
+    />
+
+    <View style={{ marginHorizontal: 10 }}>
+      <Text style={styles.sender}>{post._sender.nickname}</Text>
+      {post.messageType === 'user'
+        && <Text
+          style={[styles.message, {
+            textAlign: isMe ? 'right' : 'left',
+            fontSize: post.message === '👍' ? 36 : 14,
+          }]}
+        >{post.message}</Text>
+      }
+      {post.messageType === 'file'
+        && <CacheableImage
+          style={{
+            width: 100,
+            height: 70,
+          }} key={post.url} source={{ uri: post.url }}
+        />
+      }
+    </View>
   </View >
 );
 
 Post.propTypes = {
   post: PropTypes.shape({
     _sender: PropTypes.shape({
+      nickname: PropTypes.string,
       profileUrl: PropTypes.string,
     }),
     message: PropTypes.string,

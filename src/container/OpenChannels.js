@@ -1,23 +1,17 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
 import React, { Component, PropTypes } from 'react';
 import {
   StyleSheet,
   Text,
-  Image,
   Navigator,
   View,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
 import SendBird from 'sendbird';
+import CacheableImage from 'react-native-cacheable-image';
 import Header from '../components/Header';
-import UserImg from '../img/user.png';
-import PlusImg from '../img/plus.png';
+import LogoutImg from '../img/logout.png';
 
 const styles = StyleSheet.create({
   container: {
@@ -41,12 +35,11 @@ class OpenChannels extends Component {
     const openChannelListQuery = sb.OpenChannel.createOpenChannelListQuery();
     openChannelListQuery.next((channels, error) => {
       if (error) {
-        console.log(error);
+        Alert.alert('Failed to list channels');
         return;
       }
 
       this.setState({ channels });
-      console.log(channels);
     });
   }
 
@@ -54,14 +47,12 @@ class OpenChannels extends Component {
     return (
       <View style={styles.container}>
         <Header
-          leftIcon={UserImg}
-          rightIcon={PlusImg}
+          leftIcon={LogoutImg}
           onPressLeftAction={() => {
             this.props.navigator.push({
-              name: 'profile',
+              name: 'login',
             });
           }}
-          onPressRightAction={() => { }}
           title={'Zoznam kanálov'}
         />
         <ScrollView>
@@ -77,6 +68,7 @@ class OpenChannels extends Component {
             }}
             image={item.coverUrl}
             title={item.name}
+            subtitle={item.participantCount}
           />)}
         </ScrollView>
       </View>
@@ -106,7 +98,7 @@ const ListItem = props => (
         alignItems: 'center',
       }}
     >
-      <Image
+      <CacheableImage
         style={{
           width: coverImageSize,
           height: coverImageSize,
@@ -114,6 +106,7 @@ const ListItem = props => (
           overflow: 'hidden',
           marginRight: 10,
         }}
+        key={props.image}
         source={{ uri: props.image }}
       />
       <Text

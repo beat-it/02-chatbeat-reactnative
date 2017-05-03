@@ -6,11 +6,11 @@ import {
   Text,
   AsyncStorage,
   Button,
-  Image,
   Navigator,
   Alert,
 } from 'react-native';
 import SendBird from 'sendbird';
+import CacheableImage from 'react-native-cacheable-image';
 import ChatImg from '../img/chat.png';
 
 const styles = StyleSheet.create({
@@ -23,6 +23,8 @@ const styles = StyleSheet.create({
   logoImg: {
     marginBottom: 20,
     marginTop: 120,
+    width: 100,
+    height: 100,
   },
   logo: {
     color: '#fff',
@@ -38,11 +40,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: '#fff',
     borderRadius: 4,
-    marginBottom: 20,
   },
 });
 
 const USER_ID_KEY = 'userid';
+const USER_NICKNAME_KEY = 'nickname';
 
 class Login extends Component {
 
@@ -50,6 +52,7 @@ class Login extends Component {
     super(props);
     this.state = {
       userid: '',
+      nickname: '',
       loggingIn: false,
     };
 
@@ -59,7 +62,8 @@ class Login extends Component {
   async componentWillMount() {
     try {
       const userid = await AsyncStorage.getItem(USER_ID_KEY);
-      this.setState({ userid });
+      const nickname = await AsyncStorage.getItem(USER_NICKNAME_KEY);
+      this.setState({ userid, nickname });
     } catch (e) {
       // probably not found, nevermind
     }
@@ -69,36 +73,41 @@ class Login extends Component {
     const { sb, onChangeLoggedUser } = this.props;
     this.setState({ loggingIn: true });
     const userid = this.state.userid;
+    const nickname = this.state.nickname;
     AsyncStorage.setItem(USER_ID_KEY, userid);
+    AsyncStorage.setItem(USER_NICKNAME_KEY, nickname);
     sb.connect(userid, (user, error) => {
-      this.setState({ loggingIn: false });
       if (error) {
+        this.setState({ loggingIn: false });
         Alert.alert('Login failed, sorry.');
-      } else {
-        onChangeLoggedUser(user);
-        this.props.navigator.push({ name: 'openChannels' });
+        return;
       }
+
+      // update nickname if needed
+      if (nickname !== user.nickname) {
+        sb.updateCurrentUserInfo(nickname,
+          user.profileUrl, (response, updateError) => {
+            this.setState({ loggingIn: false });
+            if (updateError) {
+              Alert.alert('Failed to update profile');
+            } else {
+              onChangeLoggedUser(user);
+              this.props.navigator.push({ name: 'openChannels' });
+            }
+          });
+        return;
+      }
+
+      this.setState({ loggingIn: false });
+      onChangeLoggedUser(user);
+      this.props.navigator.push({ name: 'openChannels' });
     });
-
-    // if (this.state.nickname !== this.props.loggedUser.nickname) {
-    //   this.props.sb.updateCurrentUserInfo(this.state.nickname,
-    // this.props.loggedUser.profileUrl, (response, error) => {
-    //     if (error) {
-    //       // @TODO implementovat nejaku hlasku
-    //       console.error(error);
-    //     }
-
-    //     this.props.navigator.push({ name: 'openChannels' });
-    //   });
-    // } else {
-    //   this.props.navigator.push({ name: 'openChannels' });
-    // }
   }
 
   render() {
     return (
       <View style={styles.container}>
-        <Image style={styles.logoImg} source={ChatImg} />
+        <CacheableImage style={styles.logoImg} source={ChatImg} />
         <Text style={styles.logo}>ChatBeat</Text>
         {this.state.loggingIn
           ? <Text style={{ color: '#fff', fontSize: 20 }}>Logging in ...</Text>
@@ -107,11 +116,24 @@ class Login extends Component {
               autoCapitalize="none"
               placeholder="Your e-mail"
               keyboardType="email-address"
-              returnKeyType="go"
               autoCorrect={false}
-              style={styles.input}
+              style={[styles.input, {
+                marginBottom: 2,
+              }]}
               onChangeText={userid => this.setState({ userid })}
               value={this.state.userid}
+            />
+            <TextInput
+              autoCapitalize="none"
+              placeholder="Nickname"
+              returnKeyType="go"
+              autoCorrect={false}
+              style={[styles.input, {
+                marginBottom: 20,
+              }]}
+              onChangeText={nickname => this.setState({ nickname })}
+              value={this.state.nickname}
+              onSubmitEditing={this.handleLogin}
             />
             <Button
               color={'#fff'}

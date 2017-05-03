@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import ImageButton from '../components/ImageButton';
 import LikeImg from '../img/like.png';
+import PhotosImg from '../img/photos.png';
 
 const styles = StyleSheet.create({
   container: {
@@ -35,6 +36,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF7A31',
     borderWidth: 1,
     borderRadius: 4,
+    marginLeft: 10,
   },
 });
 
@@ -56,7 +58,7 @@ class MessageInput extends Component {
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <ImageButton
             onPress={this.onPressPhoto}
-            image={LikeImg}
+            image={PhotosImg}
           />
           <TextInput
             autoCorrect={false}

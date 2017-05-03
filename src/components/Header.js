@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
 });
 
 const Header = props => (
-  <View blurRadius={1} style={styles.container}>
+  <View style={styles.container}>
     <ImageButton
       onPress={props.onPressLeftAction}
       image={props.leftIcon}

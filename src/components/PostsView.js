@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   ListView,
-  ListViewDataSource,
 } from 'react-native';
 import Post from './Post';
 
@@ -47,7 +46,7 @@ class PostsView extends Component {
 PostsView.propTypes = {
   loggedUserId: PropTypes.string.isRequired,
   onLoadMore: PropTypes.func.isRequired,
-  dataSource: PropTypes.instanceOf(ListViewDataSource).isRequired,
+  dataSource: PropTypes.instanceOf(ListView.DataSource).isRequired,
 };
 
 export default PostsView;

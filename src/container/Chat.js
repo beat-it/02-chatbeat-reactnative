@@ -1,9 +1,3 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
- */
-
 import React, { Component, PropTypes } from 'react';
 import {
   StyleSheet,
@@ -125,6 +119,7 @@ class Chat extends Component {
     ImagePicker.showImagePicker({
       title: 'Select Image File To Send',
       mediaType: 'photo',
+      takePhotoButtonTitle: null,
       noData: true,
     }, (response) => {
       if (response.didCancel) {
@@ -203,12 +198,12 @@ class Chat extends Component {
 }
 
 Chat.propTypes = {
-  loggedUser: PropTypes.objectOf({
+  loggedUser: PropTypes.shape({
     userId: PropTypes.string.isRequired,
   }).isRequired,
   navigator: PropTypes.instanceOf(Navigator).isRequired,
   sb: PropTypes.instanceOf(SendBird).isRequired,
-  params: PropTypes.objectOf({
+  params: PropTypes.shape({
     channelUrl: PropTypes.string.isRequired,
   }).isRequired,
 };

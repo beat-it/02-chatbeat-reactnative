@@ -39,7 +39,11 @@ const Post = ({ post, isMe }) => (
     />
 
     <View style={{ marginHorizontal: 10 }}>
-      <Text style={styles.sender}>{post._sender.nickname}</Text>
+      <Text
+        style={[styles.sender, {
+          textAlign: isMe ? 'right' : 'left',
+        }]}
+      >{post._sender.nickname}</Text>
       {post.messageType === 'user'
         && <Text
           style={[styles.message, {

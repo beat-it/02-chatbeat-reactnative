@@ -64,7 +64,7 @@ class MessageInput extends Component {
             autoCorrect={false}
             placeholder="Napíš niečo ..."
             enablesReturnKeyAutomatically
-            returnKeyType="done"
+            returnKeyType="default"
             multiline
             onChangeText={this.onChangeMessage}
             onContentSizeChange={(event) => {
